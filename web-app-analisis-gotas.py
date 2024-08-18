@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
 import pdfkit
-import os
 
 # Page configuration
 ic = Image.open('bar-chart-icon.png')
