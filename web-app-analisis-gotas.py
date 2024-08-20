@@ -88,7 +88,7 @@ def process_image(input_image, input_length):
 def main():
     st.header("Esta *web app* te permite analizar los patrones de aspersión "
               "registrados en papel hidrosensible")
-    st.header("← Sube tu propia imagen para comenzar")
+    st.header("← Sube tu propia imagen en el panel izquierdo")
 
     # Creating input widgets
     st.sidebar.title("Análisis de Gotas")
