@@ -163,8 +163,8 @@ def main():
     """
 
     # Set the path to wkhtmltopdf executable file
-    path_wkhtmltopdf = '/usr/local/bin/wkhtmltopdf'
-    config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
+    # path_wkhtmltopdf = '/usr/local/bin/wkhtmltopdf'
+    config = pdfkit.configuration()
 
     # if upload is not none...
     pdf_bytes = pdfkit.from_string(contenido_html, False,
