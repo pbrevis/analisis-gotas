@@ -10,33 +10,50 @@ from io import BytesIO
 import pdfkit
 
 # Page configuration
-ic = Image.open('figs/bar-chart-icon.png')
+ic = Image.open('bar-chart-icon.png')
+# ic = Image.open('figs/bar-chart-icon.png') # for github
 st.set_page_config(layout="wide", page_icon=ic,
                    page_title="Análisis de Gotas")
 
 
 def process_image(input_image, input_length):
+
     # Manipulating input image
     input_img_np = np.array(input_image)
     height, width = input_img_np.shape[:2]
     img_gray = cv.cvtColor(input_img_np, cv.COLOR_RGB2GRAY)
-    img_gray2 = cv.cvtColor(img_gray, cv.COLOR_GRAY2BGR)
 
-    # Finding & drawing contours
-    img_threshed = cv.adaptiveThreshold(img_gray, 255, cv.ADAPTIVE_THRESH_MEAN_C,
+    # Finding contours
+    img_threshed_inv = cv.adaptiveThreshold(img_gray, 255, cv.ADAPTIVE_THRESH_MEAN_C,
                                         cv.THRESH_BINARY_INV, 81, 3)
-    contours = cv.findContours(img_threshed, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)[-2]
+    contours = cv.findContours(img_threshed_inv, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)[-2]
 
-    contour_drawing = cv.drawContours(img_gray2, contours, -1, (0, 255, 0), 3)
-    out_contours = Image.fromarray(contour_drawing)
+    # Drawing contours
+    img_threshed = cv.adaptiveThreshold(img_gray, 255, cv.ADAPTIVE_THRESH_MEAN_C,
+                                        cv.THRESH_BINARY, 81, 3)
+    img_thresh2bgr = cv.cvtColor(img_threshed, cv.COLOR_GRAY2BGR)
+    img_contours = cv.drawContours(img_thresh2bgr, contours, -1, (0, 0, 255), 3)
+
+    fig0 = plt.figure()
+    plt.tick_params(bottom=False, left=False, labelbottom=False, labelleft=False)
+    plt.imshow(cv.cvtColor(img_contours, cv.COLOR_BGR2RGB))
 
     # Calculating summary statistics
-    diameters = []
+    if height >= width:
+        px_per_mm = height / input_length
+        px_per_cm = 10 * px_per_mm
+    else:
+        px_per_mm = width / input_length
+        px_per_cm = 10 * px_per_mm
+
+    diameters_px = []
+    diameters_mm = []
     for contour in contours:
         (x, y), r = cv.minEnclosingCircle(contour)
-        # ctr = (int(x), int(y))
-        d = 2 * int(r)
-        diameters.append(d)
+        d_px = 2 * int(r)
+        diameters_px.append(d_px)
+        d_mm = d_px / px_per_mm
+        diameters_mm.append(d_mm)
 
     drop_count = len(contours)
 
@@ -46,18 +63,6 @@ def process_image(input_image, input_length):
 
     drop_cover = (100 * drops_surface) / (height * width)
 
-    if height >= width:
-        px_per_mm = height / input_length
-        px_per_cm = 10 * px_per_mm
-    else:
-        px_per_mm = width / input_length
-        px_per_cm = 10 * px_per_mm
-
-    diameters_mm = []
-    for diameter in diameters:
-        d_mm = diameter / px_per_mm
-        diameters_mm.append(d_mm)
-
     median_d = median(diameters_mm)
     min_d = min(diameters_mm)
     max_d = max(diameters_mm)
@@ -65,25 +70,25 @@ def process_image(input_image, input_length):
     cm2 = (height / px_per_cm) * (width / px_per_cm)
     drops_per_cm2 = drop_count / cm2
 
-    # Creating a histogram
-    # First step: calculate Freedman–Diaconis number of bins
+    # Creating histogram
+    # 1: calculate Freedman–Diaconis number of bins
     q25, q75 = np.percentile(diameters_mm, [25, 75])
     bin_width = 2 * (q75 - q25) * len(diameters_mm) ** (-1 / 3)
     fd_bins = round((max_d - min_d) / bin_width)
-    # Second step: create chart
-    fig, ax = plt.subplots()
+    # 2: create chart
+    fig1, ax = plt.subplots()
     ax.hist(diameters_mm, bins=fd_bins)
     ax.set_title('Distribución de tamaños de gota')
     ax.set_ylabel("Frecuencia (no)")
     ax.set_xlabel("Diámetro (mm)")
 
     return (drop_count, median_d, drops_per_cm2, drop_cover,
-            out_contours, fig)
+            fig0, fig1)
 
 
 def main():
-    st.header("Esta *web app* te permite analizar el papel hidrosensible "
-              "utilizado en calibración de equipos pulverizadores")
+    st.header("Esta *web app* te permite analizar los patrones de aspersión "
+              "registrados en papel hidrosensible")
     st.header("← Sube tu propia imagen para comenzar")
 
     # Creating input widgets
@@ -91,13 +96,11 @@ def main():
     uploaded_img = st.sidebar.file_uploader("SUBE TU ARCHIVO", type=["jpg", "jpeg", "png"])
     mm = st.sidebar.number_input("INGRESA EL LARGO DE TU IMAGEN (mm)",
                                  min_value=1, max_value=1000, value=76)
-    st.sidebar.text("")
-    st.sidebar.text("")
 
     if uploaded_img is None:
-        original_img = Image.open("muestra/papel70.png")
+        original_img = Image.open("muestra/papel250.png")
     else:
-        original_img = Image.open(uploaded_img) # RBG
+        original_img = Image.open(uploaded_img)
 
     # Image processing
     conteo, diametro, densidad, cobertura, img_procesada, grafico = process_image(original_img, mm)
@@ -120,20 +123,26 @@ def main():
         st.image(original_img, use_column_width=True)
     with right:
         st.text("Imagen Procesada")
-        st.image(img_procesada, use_column_width=True)
+        st.pyplot(img_procesada)
 
     # Displaying PyPlot chart
     st.pyplot(grafico)
 
-    # Convert chart to PNG (base64 encoded)
-    tmpfile = BytesIO()
-    plt.savefig(tmpfile, format="PNG")
-    tmpfile.seek(0)
-    base64_png = base64.b64encode(tmpfile.read()).decode()
+    # Convert fig0 (img_procesada) to PNG (base64 encoded)
+    tmpfile0 = BytesIO()
+    img_procesada.savefig(tmpfile0, format="PNG")
+    tmpfile0.seek(0)
+    base64_fig0 = base64.b64encode(tmpfile0.read()).decode()
+
+    # Convert fig1 (grafico) to PNG (base64 encoded)
+    tmpfile1 = BytesIO()
+    grafico.savefig(tmpfile1, format="PNG")
+    tmpfile1.seek(0)
+    base64_fig1 = base64.b64encode(tmpfile1.read()).decode()
 
     # HTML to PDF
     formato = {'page-size': 'Letter',
-               'margin-top': '1in',
+               'margin-top': '0.75in',
                'margin-right': '0.75in',
                'margin-bottom': '0.75in',
                'margin-left': '1.5in',
@@ -142,7 +151,9 @@ def main():
 
     contenido_html = f"""
     <html>
-      <head><title>Resultados del an&aacute;lisis de gotas</title></head>
+      <head>
+      <title>Resultados del an&aacute;lisis de gotas</title>
+      </head>
       <body>
         
         <table style="width:100%" border="0">
@@ -155,7 +166,14 @@ def main():
             <p>Tasa de cobertura (% del &aacute;rea): {cobertura:.2f}</p>
           </td></tr>
           <tr><td colspan="2">
-            <img src="data:image/png;base64, {base64_png}">
+            <img src="data:image/png;base64, {base64_fig1}">
+          </td></tr>
+          <tr><td colspan="2">
+            <img src="data:image/png;base64, {base64_fig0}">
+          </td></tr>
+          <tr><td style="width:50%">
+            <p>[https://droplets.streamlit.app/]</p>
+          </td><td style="width:50%">
           </td></tr>
         </table>
       </body>
@@ -163,10 +181,11 @@ def main():
     """
 
     # Set the path to wkhtmltopdf executable file
-    # path_wkhtmltopdf = '/usr/local/bin/wkhtmltopdf'
-    config = pdfkit.configuration()
+    path_wkhtmltopdf = '/usr/local/bin/wkhtmltopdf'
+    # remove line above for github
+    config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
+    # config = pdfkit.configuration() # for github
 
-    # if upload is not none...
     pdf_bytes = pdfkit.from_string(contenido_html, False,
                                    configuration=config, options=formato)
 
@@ -177,9 +196,7 @@ def main():
 
     st.sidebar.text("")
     st.sidebar.text("")
-    st.sidebar.text("")
-    st.sidebar.text("")
-    st.sidebar.text("Desarrollado por  \nPatricio Brevis (2024)")
+    st.sidebar.text("Desarrollado por  \nPatricio Brevis (2024)  \n[https://brevis.site/]")
 
 
 
