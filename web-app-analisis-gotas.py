@@ -10,8 +10,7 @@ from io import BytesIO
 import pdfkit
 
 # Page configuration
-ic = Image.open('bar-chart-icon.png')
-# ic = Image.open('figs/bar-chart-icon.png') # for github
+ic = Image.open('figs/bar-chart-icon.png')
 st.set_page_config(layout="wide", page_icon=ic,
                    page_title="Análisis de Gotas")
 
@@ -181,10 +180,7 @@ def main():
     """
 
     # Set the path to wkhtmltopdf executable file
-    path_wkhtmltopdf = '/usr/local/bin/wkhtmltopdf'
-    # remove line above for github
-    config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
-    # config = pdfkit.configuration() # for github
+    # config = pdfkit.configuration()
 
     pdf_bytes = pdfkit.from_string(contenido_html, False,
                                    configuration=config, options=formato)
