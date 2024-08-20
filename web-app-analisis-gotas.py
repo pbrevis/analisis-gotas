@@ -175,6 +175,12 @@ def main():
     st.sidebar.download_button(label='Bajar PDF', data=pdf_bytes,
                        file_name="resultados.pdf", mime='application/octet-stream')
 
+    st.sidebar.text("")
+    st.sidebar.text("")
+    st.sidebar.text("")
+    st.sidebar.text("")
+    st.sidebar.text("Desarrollado por  \nPatricio Brevis (2024)")
+
 
 
 # Run main function
