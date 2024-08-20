@@ -10,7 +10,7 @@ from io import BytesIO
 import pdfkit
 
 # Page configuration
-ic = Image.open('bar-chart-icon.png')
+ic = Image.open('figs/bar-chart-icon.png')
 st.set_page_config(layout="wide", page_icon=ic,
                    page_title="Análisis de Gotas")
 
