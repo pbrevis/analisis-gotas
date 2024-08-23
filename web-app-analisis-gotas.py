@@ -171,7 +171,7 @@ def main():
             <img src="data:image/png;base64, {base64_fig0}">
           </td></tr>
           <tr><td style="width:50%">
-            <p>[https://droplets.streamlit.app/]</p>
+            <p>Reporte generado con la web app https://droplets.streamlit.app</p>
           </td><td style="width:50%">
           </td></tr>
         </table>
