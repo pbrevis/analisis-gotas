@@ -190,7 +190,7 @@ def main():
 
     st.sidebar.text("")
     st.sidebar.text("")
-    st.sidebar.text("Desarrollado por  \nPatricio Brevis (2024)  \n[https://brevis.site/]")
+    st.sidebar.text("Desarrollado por  \nPatricio Brevis (2024)")
 
 
 
