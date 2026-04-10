@@ -179,7 +179,7 @@ def main():
     </html>
     """
 
-    config = pdfkit.configuration()
+    config = pdfkit.configuration(wkhtmltopdf='/usr/bin/wkhtmltopdf')
     pdf_bytes = pdfkit.from_string(contenido_html, False,
                                    configuration=config, options=formato)
 
