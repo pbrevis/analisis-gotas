@@ -7,7 +7,7 @@ from statistics import median
 import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
-# import pdfkit
+import pdfkit
 
 # Page configuration
 ic = Image.open('figs/bar-chart-icon.png')
@@ -179,14 +179,14 @@ def main():
     </html>
     """
 
-#    config = pdfkit.configuration()
-#    pdf_bytes = pdfkit.from_string(contenido_html, False,
-#                                   configuration=config, options=formato)
+    config = pdfkit.configuration()
+    pdf_bytes = pdfkit.from_string(contenido_html, False,
+                                   configuration=config, options=formato)
 
     st.sidebar.text("")
     st.sidebar.text("DESCARGA TUS RESULTADOS")
-#    st.sidebar.download_button(label='Bajar PDF', data=pdf_bytes,
-#                       file_name="resultados.pdf", mime='application/octet-stream')
+    st.sidebar.download_button(label='Bajar PDF', data=pdf_bytes,
+                       file_name="resultados.pdf", mime='application/octet-stream')
 
     st.sidebar.text("")
     st.sidebar.text("")
