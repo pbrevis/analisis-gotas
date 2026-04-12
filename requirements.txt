@@ -24,6 +24,7 @@ numpy==2.0.1
 opencv-python==4.10.0.84
 packaging==24.1
 pandas==2.2.2
+pdfkit
 pillow==10.4.0
 protobuf==5.27.3
 pyarrow==17.0.0
